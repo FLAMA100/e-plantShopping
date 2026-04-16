@@ -1,166 +1,211 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeItem, updateQuantity } from '../store/CartSlice';
+import { removeItem, updateQuantity } from './CartSlice';
 
-const CartItem = ({ onNavigate }) => {
+const CartItem = ({ onContinueShopping }) => {
   const dispatch = useDispatch();
-  const cartItems = useSelector((state) => state.cart.items);
 
-  // ── Derived values ──────────────────────────────────────────────────────────
-  const totalCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const totalCost = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  // Select all cart items from Redux store
+  const cart = useSelector((state) => state.cart.items);
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
-  const handleIncrease = (item) => {
-    dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }));
+  // ── Calculate total cart amount (sum of cost × quantity for all items) ──
+  const calculateTotalAmount = () => {
+    let total = 0;
+    for (let i = 0; i < cart.length; i++) {
+      total += cart[i].cost * cart[i].quantity;
+    }
+    return total.toFixed(2);
   };
 
-  const handleDecrease = (item) => {
+  // ── Calculate total cost for a single item (cost × quantity) ──
+  const calculateTotalCost = (item) => {
+    return (item.cost * item.quantity).toFixed(2);
+  };
+
+  // ── Increment item quantity ──
+  const handleIncrement = (item) => {
+    dispatch(updateQuantity({ name: item.name, quantity: item.quantity + 1 }));
+  };
+
+  // ── Decrement item quantity (remove if reaches 0) ──
+  const handleDecrement = (item) => {
     if (item.quantity === 1) {
-      dispatch(removeItem(item.id));
+      dispatch(removeItem(item.name));
     } else {
-      dispatch(updateQuantity({ id: item.id, quantity: item.quantity - 1 }));
+      dispatch(updateQuantity({ name: item.name, quantity: item.quantity - 1 }));
     }
   };
 
-  const handleDelete = (id) => {
-    dispatch(removeItem(id));
+  // ── Remove item entirely from cart ──
+  const handleRemove = (item) => {
+    dispatch(removeItem(item.name));
   };
 
-  const handleCheckout = () => {
-    alert('🌿 Coming Soon! Thank you for shopping at Paradise Nursery.');
+  // ── Continue Shopping handler ──
+  const handleContinueShopping = () => {
+    if (onContinueShopping) {
+      onContinueShopping();
+    }
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Checkout handler ──
+  const handleCheckoutShopping = () => {
+    alert('Functionality to be added for future reference');
+  };
+
   return (
-    <div className="cart-page">
-      {/* Navbar */}
-      <nav className="navbar">
-        <a
-          className="navbar-brand"
-          onClick={() => onNavigate('landing')}
-          style={{ cursor: 'pointer' }}
-        >
-          🌿 Paradise Nursery
-        </a>
-        <ul className="navbar-links">
-          <li>
-            <a onClick={() => onNavigate('landing')} style={{ cursor: 'pointer' }}>
-              Home
-            </a>
-          </li>
-          <li>
-            <a onClick={() => onNavigate('products')} style={{ cursor: 'pointer' }}>
-              Plants
-            </a>
-          </li>
-          <li>
-            <a onClick={() => onNavigate('about')} style={{ cursor: 'pointer' }}>
-              About
-            </a>
-          </li>
-          <li>
-            <a
-              className="cart-icon"
-              onClick={() => onNavigate('cart')}
-              style={{ cursor: 'pointer' }}
-              aria-label={`Cart with ${totalCount} items`}
+    <div style={{ paddingTop: '80px', minHeight: '100vh', background: '#f5f5f0' }}>
+
+      {/* Page Title */}
+      <h2 style={{
+        textAlign: 'center',
+        padding: '2rem 1rem 0.5rem',
+        color: '#1b5e20',
+        fontSize: '2rem',
+        fontWeight: 800,
+      }}>
+        Shopping Cart
+      </h2>
+
+      {/* Total Cart Amount */}
+      <div style={{
+        textAlign: 'center',
+        fontSize: '1.3rem',
+        fontWeight: 700,
+        color: '#2e7d32',
+        marginBottom: '1.5rem',
+      }}>
+        Total Cart Amount: ${calculateTotalAmount()}
+      </div>
+
+      {/* Cart Items List */}
+      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '0 1.5rem' }}>
+
+        {cart.length === 0 ? (
+          <p style={{ textAlign: 'center', color: '#888', fontSize: '1.1rem', padding: '3rem 0' }}>
+            Your cart is empty. 🌱
+          </p>
+        ) : (
+          cart.map((item) => (
+            <div
+              key={item.name}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1.25rem',
+                background: '#fff',
+                borderRadius: '14px',
+                padding: '1rem 1.25rem',
+                marginBottom: '1rem',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
+              }}
             >
-              🛒
-              {totalCount > 0 && (
-                <span className="cart-badge">{totalCount}</span>
-              )}
-            </a>
-          </li>
-        </ul>
-      </nav>
+              {/* Plant Thumbnail */}
+              <img
+                src={item.image}
+                alt={item.name}
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  objectFit: 'cover',
+                  borderRadius: '10px',
+                  flexShrink: 0,
+                }}
+              />
 
-      <h1>🛒 Your Shopping Cart</h1>
+              {/* Plant Name and Unit Price */}
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, color: '#1b5e20', fontSize: '1rem', fontWeight: 700 }}>
+                  {item.name}
+                </h3>
+                <p style={{ margin: '0.2rem 0 0', color: '#777', fontSize: '0.85rem' }}>
+                  Unit Price: ${parseFloat(item.cost).toFixed(2)}
+                </p>
+              </div>
 
-      <div className="cart-container">
-        {cartItems.length === 0 ? (
-          <div className="cart-empty">
-            <p>Your cart is empty. Start adding some plants! 🌱</p>
-            <br />
+              {/* Quantity Controls: Increase and Decrease buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  onClick={() => handleDecrement(item)}
+                  style={{
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    border: '2px solid #4caf50', background: 'transparent',
+                    color: '#4caf50', fontSize: '1.2rem', fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  -
+                </button>
+
+                <span style={{ fontWeight: 700, fontSize: '1rem', minWidth: '28px', textAlign: 'center' }}>
+                  {item.quantity}
+                </span>
+
+                <button
+                  onClick={() => handleIncrement(item)}
+                  style={{
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    border: '2px solid #4caf50', background: 'transparent',
+                    color: '#4caf50', fontSize: '1.2rem', fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Total cost for this item (unit price × quantity) */}
+              <div style={{
+                fontWeight: 700, color: '#2e7d32',
+                fontSize: '1rem', minWidth: '72px', textAlign: 'right',
+              }}>
+                ${calculateTotalCost(item)}
+              </div>
+
+              {/* Delete / Remove button */}
+              <button
+                onClick={() => handleRemove(item)}
+                style={{
+                  background: 'none', border: 'none',
+                  color: '#e53935', fontSize: '1.3rem', cursor: 'pointer',
+                }}
+              >
+                🗑
+              </button>
+            </div>
+          ))
+        )}
+
+        {/* Action Buttons */}
+        {cart.length > 0 && (
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+
+            {/* Continue Shopping — links back to product listing */}
             <button
-              className="continue-btn"
-              onClick={() => onNavigate('products')}
-              style={{ maxWidth: '220px', margin: '0 auto', display: 'block' }}
+              onClick={handleContinueShopping}
+              style={{
+                flex: 1, padding: '0.85rem',
+                background: 'transparent', border: '2px solid #4caf50',
+                color: '#4caf50', borderRadius: '10px',
+                fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer',
+              }}
             >
-              Browse Plants
+              Continue Shopping
+            </button>
+
+            {/* Checkout — shows Coming Soon message */}
+            <button
+              onClick={handleCheckoutShopping}
+              style={{
+                flex: 1, padding: '0.85rem',
+                background: '#4caf50', border: 'none',
+                color: '#fff', borderRadius: '10px',
+                fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer',
+              }}
+            >
+              Checkout
             </button>
           </div>
-        ) : (
-          <>
-            {/* Cart Items */}
-            {cartItems.map((item) => {
-              const itemTotal = item.price * item.quantity;
-              return (
-                <div key={item.id} className="cart-item">
-                  {/* Thumbnail */}
-                  <img src={item.image} alt={item.name} />
-
-                  {/* Name + unit price */}
-                  <div className="cart-item-details">
-                    <h3>{item.name}</h3>
-                    <p>Unit price: ${item.price.toFixed(2)}</p>
-                  </div>
-
-                  {/* Quantity controls */}
-                  <div className="quantity-controls">
-                    <button
-                      onClick={() => handleDecrease(item)}
-                      aria-label="Decrease quantity"
-                    >
-                      −
-                    </button>
-                    <span>{item.quantity}</span>
-                    <button
-                      onClick={() => handleIncrease(item)}
-                      aria-label="Increase quantity"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  {/* Item total cost */}
-                  <div className="cart-item-price">${itemTotal.toFixed(2)}</div>
-
-                  {/* Delete button */}
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(item.id)}
-                    aria-label={`Remove ${item.name} from cart`}
-                    title="Remove item"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              );
-            })}
-
-            {/* Summary */}
-            <div className="cart-summary">
-              <div className="cart-total">
-                <span>Total ({totalCount} item{totalCount !== 1 ? 's' : ''})</span>
-                <span>${totalCost.toFixed(2)}</span>
-              </div>
-              <div className="cart-actions">
-                <button
-                  className="continue-btn"
-                  onClick={() => onNavigate('products')}
-                >
-                  ← Continue Shopping
-                </button>
-                <button className="checkout-btn" onClick={handleCheckout}>
-                  Checkout — Coming Soon
-                </button>
-              </div>
-            </div>
-          </>
         )}
       </div>
     </div>
